@@ -9,9 +9,11 @@ using Variant5;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using ClosedXML.Excel;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Variant5.Controllers
 {
+    //[Authorize(Roles = "admin, user")]
     public class FacultiesController : Controller
     {
         private readonly MyLabNewContext _context;
@@ -167,11 +169,11 @@ namespace Variant5.Controllers
                         using (XLWorkbook workBook = new XLWorkbook(stream, XLEventTracking.Disabled))
                         {
                             var faculty_iterator = 0;
-                            //перегляд усіх листів (в даному випадку факультетів)
+                            //перегляд усіх листів (в даному випадку категорій)
                             foreach (IXLWorksheet worksheet in workBook.Worksheets)
                             {
 
-                                //worksheet.Name - назва факультету. Пробуємо знайти в БД, якщо відсутня, то створюємо нову
+                                //worksheet.Name - назва категорії. Пробуємо знайти в БД, якщо відсутня, то створюємо нову
                                 Faculty newfac;
                                 var c = (from cat in _context.Faculties
                                          where cat.FacultyName.Contains(worksheet.Name)
@@ -179,6 +181,7 @@ namespace Variant5.Controllers
                                 if (c.Count > 0)
                                 {
                                     newfac = c[0];
+                                    Console.WriteLine("c.Count: {0}", c.Count);
                                 }
                                 else
                                 {
@@ -196,16 +199,11 @@ namespace Variant5.Controllers
                                     try
                                     {
                                         Teacher teacher = new Teacher();
-                                        Console.WriteLine("Count {0}", _context.Teachers.Count());
-                                        Console.WriteLine("Rownum {0}", row.RowNumber());
-
-                                        var newTeacherId = _context.Teachers.Count() + row.RowNumber()-1;
-                                        teacher.Id = newTeacherId;
-                                        teacher.Name = row.Cell(1).Value.ToString();// Cell(1) ім'я іикладча
+                                        teacher.Id = _context.Teachers.Count() + row.RowNumber();
+                                        teacher.Name = row.Cell(1).Value.ToString();// Cell(1)
                                         teacher.FacultyId = newfac.Id;
-                                        teacher.SubjectId = 1;
 
-                                        if (row.Cell(2).Value.ToString().Length > 0) //Cell(2) кафедра викладача
+                                        if (row.Cell(2).Value.ToString().Length > 0) //Cell(2)
                                         {
                                             Chair chair;
                                             var a = (from cha in _context.Chairs
@@ -219,16 +217,14 @@ namespace Variant5.Controllers
                                             else
                                             {
                                                 chair = new Chair();
-                                                chair.Id = _context.Chairs.Count() + row.RowNumber()-1;
+                                                chair.Id = _context.Chairs.Count() + row.RowNumber();
                                                 chair.ChairName = row.Cell(2).Value.ToString();
                                                 //додати в контекст
                                                 _context.Add(chair);
-                                                await _context.SaveChangesAsync();
-
                                             }
                                             teacher.ChairId = chair.Id;
                                         }
-                                        if (row.Cell(3).Value.ToString().Length > 0) //Cell(3) предмет який викладає
+                                        if (row.Cell(3).Value.ToString().Length > 0) //Cell(3)
                                         {
                                             Subject subject;
                                             var a = (from sub in _context.Subjects
@@ -242,81 +238,15 @@ namespace Variant5.Controllers
                                             else
                                             {
                                                 subject = new Subject();
-                                                subject.Id = _context.Subjects.Count() + row.RowNumber()-1;
-                                                subject.Name = row.Cell(3).Value.ToString(); // назва предмету, що додається
-                                                subject.TeacherId = newTeacherId;
-                                                Room room;
-                                                var b = (from rm in _context.Rooms
-                                                         where
-                                                         rm.Name.Contains(row.Cell(4).Value.ToString())
-                                                         select rm).ToList();
-                                                if (b.Count > 0)
-                                                {
-                                                    room = b[0];
-                                                    //subject.RoomId = room.Id;
-                                                }
-                                                else
-                                                {
-                                                    room = new Room();
-                                                    room.Id = _context.Rooms.Count() + row.RowNumber() - 1;
-                                                    room.Name = row.Cell(4).Value.ToString();
-                                                    _context.Add(room);
-                                                    await _context.SaveChangesAsync();
-
-                                                }
-                                                subject.RoomId = room.Id;
-
-                                                Group group;
-                                                var g = (from gr in _context.Groups
-                                                         where
-                                                         gr.GroupName.Contains(row.Cell(5).Value.ToString())
-                                                         select gr).ToList();
-                                                if (g.Count > 0)
-                                                {
-                                                    group = g[0];
-                                                    // subject.GroupId = group.Id;
-                                                }
-                                                else
-                                                {
-                                                    group = new Group();
-                                                    group.Id = _context.Groups.Count() + row.RowNumber() - 1;
-                                                    group.GroupName = row.Cell(5).Value.ToString();
-                                                    _context.Add(group);
-                                                    await _context.SaveChangesAsync();
-
-                                                }
-                                                subject.GroupId = group.Id;
-
-
-                                                Day day = _context.Days.Find(1);                                                
-                                                var d = (from ds in _context.Days
-                                                         where
-                                                         ds.DayName.Contains(row.Cell(6).Value.ToString())
-                                                         select ds).ToList();
-                                                if (d.Count > 0)
-                                                {
-                                                    day = d[0];
-                                                }
-                                                else
-                                                {
-                                                    day.Id = 1;
-                                                }
-                                                subject.DayId = day.Id;
-
-                                                subject.LecNum = row.Cell(7).Value.ToString();
-                                                
-
-
+                                                subject.Id = _context.Subjects.Count() + row.RowNumber();
+                                                subject.Name = row.Cell(3).Value.ToString();
                                                 //додати в контекст
                                                 _context.Add(subject);
-                                                await _context.SaveChangesAsync();
-
                                             }
                                             teacher.SubjectId = subject.Id;
                                         }
 
                                         _context.Teachers.Add(teacher);
-                                        await _context.SaveChangesAsync();
 
                                     }
                                     catch (Exception e)

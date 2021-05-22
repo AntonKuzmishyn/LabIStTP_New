@@ -10,6 +10,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Variant5.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+
 
 namespace Variant5
 {
@@ -28,6 +30,12 @@ namespace Variant5
             string connection = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<MyLabNewContext>(options => options.UseSqlServer(connection));
             services.AddControllersWithViews();
+
+            string connectionIdentity = Configuration.GetConnectionString("IdentityConnection");
+            services.AddDbContext<IdentityContext>(options => options.UseSqlServer(connectionIdentity));
+            services.AddControllersWithViews();
+            services.AddIdentity<User, IdentityRole>()
+                .AddEntityFrameworkStores<IdentityContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -49,12 +57,14 @@ namespace Variant5
             app.UseRouting();
 
             app.UseAuthorization();
+            app.UseAuthentication(); // підключення аутентифікації
+
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Faculties}/{action=Index}/{id?}");
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }
