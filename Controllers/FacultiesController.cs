@@ -196,9 +196,18 @@ namespace Variant5.Controllers
                                 //перегляд усіх рядків
                                 foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
                                 {
-                                    try
+
+                                    Teacher teacher;
+                                    var t = (from tec in _context.Teachers
+                                             where tec.Name.Contains(row.Cell(1).Value.ToString())
+                                             select tec).ToList();
+                                    if (t.Count > 0)
                                     {
-                                        Teacher teacher = new Teacher();
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        teacher = new Teacher();
                                         teacher.Id = _context.Teachers.Count() + row.RowNumber();
                                         teacher.Name = row.Cell(1).Value.ToString();// Cell(1)
                                         teacher.FacultyId = newfac.Id;
@@ -245,14 +254,12 @@ namespace Variant5.Controllers
                                             }
                                             teacher.SubjectId = subject.Id;
                                         }
+                                    }
+                                        
 
                                         _context.Teachers.Add(teacher);
 
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        //logging самостійно :)
-                                    }
+                                    
                                 }
                             }
                         }

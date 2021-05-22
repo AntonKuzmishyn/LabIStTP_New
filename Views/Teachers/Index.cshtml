@@ -51,3 +51,32 @@
         }
     </tbody>
 </table>
+
+<div class="container">
+    <div id="chart1"></div>
+</div>
+
+@section scripts {
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://www.google.com/jsapi"></script>
+
+    <script>
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart2);
+
+        function drawChart2() {
+            $.get('/api/Charts/JsonData2', function (jsonData) {
+                data = google.visualization.arrayToDataTable(jsonData);
+                var option = {
+                    title: "Співвідношення кількості викладачів за кафедрами",
+                    width: 800,
+                    height: 500
+                };
+                chart = new google.visualization.PieChart(document.getElementById('chart1'));
+                chart.draw(data, option);
+            })
+
+        }
+    </script>
+}
+

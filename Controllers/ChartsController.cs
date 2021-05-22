@@ -20,16 +20,34 @@ namespace Variant5.Controllers
         [HttpGet("JsonData")]
         public JsonResult JsonData()
         {
-            var faculties = _context.Faculties.Include(b => b.Teachers).ToList();
-            List<object> facTeacher = new List<object>();
+            
+                var faculties = _context.Faculties.Include(b => b.Teachers).ToList();
+                List<object> facTeacher = new List<object>();
 
-            facTeacher.Add(new[] { "Факультет", "Кількість викладачів" });
+                facTeacher.Add(new[] { "Факультет", "Кількість викладачів" });
 
-            foreach (var c in faculties)
+                foreach (var c in faculties)
+                {
+                    facTeacher.Add(new object[] { c.FacultyName, c.Teachers.Count() });
+                }
+                return new JsonResult(facTeacher);
+
+        }
+        [HttpGet("JsonData2")]
+        public JsonResult JsonData2()
+        {
+
+            var chairs = _context.Chairs.Include(b => b.Teachers).ToList();
+            List<object> chaTeacher = new List<object>();
+
+            chaTeacher.Add(new[] { "Кафедра", "Кількість викладачів" });
+
+            foreach (var c in chairs)
             {
-                facTeacher.Add(new object[] { c.FacultyName, c.Teachers.Count() });
+                chaTeacher.Add(new object[] { c.ChairName, c.Teachers.Count() });
             }
-            return new JsonResult(facTeacher);
+            return new JsonResult(chaTeacher);
+
         }
     }
 }
